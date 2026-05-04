@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 import Header from './components/Header.jsx'
+import { LegalModal } from './components/LegalModal.jsx'
+import { legalData } from './legal/legalData.js'
 import ParameterPanel from './components/ParameterPanel/ParameterPanel.jsx'
 import Dashboard from './components/Dashboard/Dashboard.jsx'
 import ChartTabs from './components/Charts/ChartTabs.jsx'
@@ -25,6 +27,7 @@ function validate(params) {
 
 export default function App() {
   const [params, setParams] = useState({ ...DEFAULTS })
+  const [legalView, setLegalView] = useState(null)
 
   function handleChange(key, value) {
     setParams((prev) => ({ ...prev, [key]: value }))
@@ -70,11 +73,62 @@ export default function App() {
         </div>
       </main>
       <footer className="app-footer">
-        <p>
-          🔒 <strong>Datenschutz:</strong> Alle Berechnungen laufen lokal in deinem Browser.
-          Deine Eingaben werden nicht übertragen und nicht dauerhaft gespeichert.
-        </p>
+        <div className="footer-inner">
+          <p className="footer-privacy-note">
+            🔒 <strong>Datenschutz:</strong> Alle Berechnungen laufen lokal in deinem Browser.
+            Deine Eingaben werden nicht übertragen und nicht dauerhaft gespeichert.
+          </p>
+          <div className="footer-meta">
+
+            {legalData.website ? (
+              <a
+                href={legalData.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footer-branding"
+              >
+                <img
+                  src={`${import.meta.env.BASE_URL}assets/veit-bds-logo.png`}
+                  alt="Veit-BDS"
+                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                />
+                <span>Gebaut von <strong>Veit-BDS</strong></span>
+              </a>
+            ) : (
+              <div className="footer-branding">
+                <img
+                  src={`${import.meta.env.BASE_URL}assets/veit-bds-logo.png`}
+                  alt="Veit-BDS"
+                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                />
+                <span>Gebaut von <strong>Veit-BDS</strong></span>
+              </div>
+            )}
+
+            {(legalData.name || legalData.email) && (
+              <div className="footer-legal-links">
+                <button
+                  className="footer-legal-btn"
+                  onClick={() => setLegalView('impressum')}
+                >
+                  Impressum
+                </button>
+                <button
+                  className="footer-legal-btn"
+                  onClick={() => setLegalView('datenschutz')}
+                >
+                  Datenschutz
+                </button>
+              </div>
+            )}
+
+          </div>
+        </div>
       </footer>
+
+      {legalView && (
+        <LegalModal view={legalView} onClose={() => setLegalView(null)} />
+      )}
     </div>
   )
 }

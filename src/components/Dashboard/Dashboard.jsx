@@ -16,10 +16,21 @@ export default function Dashboard({ results }) {
       <div className="kpi-section-title">Einzahlungen & Depotwert</div>
       <div className="kpi-grid">
         <KpiCard
-          label="Summe Einzahlungen"
+          label="Summe Einzahlungen (Sparrate)"
           value={formatEuro(depotSimplified.totalContributions)}
           sub={`Laufzeit: ${results.params.renteneintrittsalter - results.params.alterAktuell} Jahre`}
         />
+        {results.params.vorabpauschaleMode !== 'deaktiviert' && (
+          <KpiCard
+            label={
+              results.params.vorabpauschaleMode === 'depot'
+                ? 'Kum. VP-Steuer (zusätzl. Belastung)'
+                : 'Kum. VP-Steuer (in Sparrate enthalten)'
+            }
+            value={formatEuro(depotRealistic.cumulativeVorabpauschalensteuer)}
+            sub={`Eff. Gesamtbelastung: ${formatEuro(depotRealistic.effectiveTotalOutflows)}`}
+          />
+        )}
         <KpiCard
           label="Depotwert vor Steuer (vereinfacht)"
           value={formatEuro(depotSimplified.depotwert)}
@@ -28,7 +39,7 @@ export default function Dashboard({ results }) {
         <KpiCard
           label="Depotwert vor Steuer (realistisch)"
           value={formatEuro(depotRealistic.depotwert)}
-          sub={`Netto: ${formatEuro(depotRealistic.netValue)} · VP-Steuer: ${formatEuro(depotRealistic.cumulativeVorabpauschalensteuer)}`}
+          sub={`Netto: ${formatEuro(depotRealistic.netValue)}`}
         />
         <KpiCard
           label="Police-Vertragsguthaben"

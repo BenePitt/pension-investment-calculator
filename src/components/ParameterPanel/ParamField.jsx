@@ -6,6 +6,7 @@ export default function ParamField({
   value,
   onChange,
   type = 'number',
+  options = [],   // für type='radio': [{ value, label }]
   min,
   max,
   step = 1,
@@ -16,11 +17,12 @@ export default function ParamField({
   const [showHelp, setShowHelp] = useState(false)
 
   function handleChange(e) {
-    const raw = e.target.value
     if (type === 'checkbox') {
       onChange(e.target.checked)
+    } else if (type === 'radio') {
+      onChange(e.target.value)
     } else {
-      const parsed = parseFloat(raw)
+      const parsed = parseFloat(e.target.value)
       if (!isNaN(parsed)) onChange(parsed)
     }
   }
@@ -28,10 +30,10 @@ export default function ParamField({
   return (
     <div className="param-field">
       <div className="param-field-header">
-        <label htmlFor={fieldId} className="param-label">
+        <span id={`${fieldId}-label`} className="param-label">
           {label}
           {unit && <span className="param-unit">{unit}</span>}
-        </label>
+        </span>
         {helpText && (
           <button
             type="button"
@@ -62,6 +64,26 @@ export default function ParamField({
           <span className="toggle-slider" aria-hidden="true" />
           <span className="toggle-text">{value ? 'Aktiv' : 'Inaktiv'}</span>
         </label>
+      ) : type === 'radio' ? (
+        <div
+          className="radio-group"
+          role="radiogroup"
+          aria-labelledby={`${fieldId}-label`}
+        >
+          {options.map((opt) => (
+            <label key={opt.value} className="radio-option">
+              <input
+                type="radio"
+                name={fieldId}
+                value={opt.value}
+                checked={value === opt.value}
+                onChange={handleChange}
+                disabled={disabled}
+              />
+              <span className="radio-label">{opt.label}</span>
+            </label>
+          ))}
+        </div>
       ) : (
         <input
           id={fieldId}

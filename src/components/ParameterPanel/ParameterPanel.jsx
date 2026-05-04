@@ -22,7 +22,7 @@ const HELP = {
   kirchensteuer: 'Kirchensteuer auf Kapitalerträge (8 oder 9 % der Abgeltungsteuer, je nach Bundesland). Default: 0 % (konfessionslos).',
   teilfreistellung: 'Steuerliche Teilfreistellung für Aktienfonds: 30 % der Erträge sind steuerfrei (§ 20 InvStG). Default: 30 % (Aktienfonds).',
   basiszins: 'Basiszins für die Vorabpauschale (jährlich vom BZSt veröffentlicht). Basisertrag = Depotwert Jahresbeginn × Basiszins × 70 %. Default: 3,20 % p. a.',
-  vorabpauschalenAktiviert: 'Ob die Vorabpauschale jährlich modelliert wird (realistischere Depot-Variante). Bei Aktivierung werden jährlich geringe Steuern auf thesaurierende ETFs fällig, die den Endbetrag leicht reduzieren.',
+  vorabpauschaleMode: 'Wie die Vorabpauschale modelliert wird. „Aus Depot": VP-Steuer wird jährlich direkt aus dem Fondsvermögen entnommen (Standard, einfach). „Aus Sparrate/Einkommen": VP-Steuer wird aus dem laufenden Einkommen bezahlt, das Depot bleibt unberührt — realistischer, da Anleger VP-Steuer i. d. R. überweisen statt Fondsanteile verkaufen.',
   grenzsteuersatz: 'Persönlicher Einkommensteuersatz im Rentenalter. Wird auf steuerpflichtige Kapitalerträge der Police angewendet. Default: 45 % (höchster Grenzsteuersatz; ggf. nach unten anpassen).',
   freistellung15Prozent: '15 %-Freistellung gemäß § 20 Abs. 1 Nr. 6 EStG für fondsgebundene Rentenversicherungen (Investmentanteile). 15 % des Unterschiedsbetrags sind steuerfrei. Default: aktiviert.',
   regel12_62: '12/62-Regel: Wenn der Vertrag mindestens 12 Jahre läuft UND die Auszahlung nach dem 62. Geburtstag erfolgt, ist nur die Hälfte des verbleibenden Unterschiedsbetrags steuerpflichtig. Default: automatisch anwenden wenn Bedingungen erfüllt.',
@@ -104,7 +104,15 @@ export default function ParameterPanel({ params, onChange, onReset }) {
         {field('basiszins', { label: 'Basiszins Vorabpauschale', unit: '% p. a.', min: 0, max: 10, step: 0.01,
           value: params.basiszins * 100,
           onChange: (v) => onChange('basiszins', v / 100) })}
-        {field('vorabpauschalenAktiviert', { label: 'Vorabpauschale', type: 'checkbox' })}
+        {field('vorabpauschaleMode', {
+          label: 'Vorabpauschale',
+          type: 'radio',
+          options: [
+            { value: 'deaktiviert', label: 'Deaktiviert' },
+            { value: 'depot', label: 'Aus Depot' },
+            { value: 'sparrate', label: 'Aus Sparrate / Einkommen' },
+          ],
+        })}
       </Accordion>
 
       <Accordion title="Steuern Rentenpolice">

@@ -72,6 +72,33 @@ describe('calculateDepotRealistic', () => {
     })
   })
 
+  it('vorabpauschaleMode deaktiviert: alle taxVP = 0, yearlyData vollständig', () => {
+    const result = calculateDepotRealistic({ ...DEFAULTS, vorabpauschaleMode: 'deaktiviert' })
+    const expectedYears = DEFAULTS.renteneintrittsalter - DEFAULTS.alterAktuell
+    expect(result.yearlyData.length).toBe(expectedYears)
+    result.yearlyData.forEach(y => expect(y.taxVP).toBe(0))
+    expect(result.cumulativeVorabpauschalensteuer).toBe(0)
+    expect(result.trueNetValue).toBe(result.netValue)
+  })
+
+  it('vorabpauschaleMode sparrate: Depot nicht durch VP-Steuer reduziert', () => {
+    const depot = calculateDepotRealistic({ ...DEFAULTS, vorabpauschaleMode: 'depot' })
+    const sparrate = calculateDepotRealistic({ ...DEFAULTS, vorabpauschaleMode: 'sparrate' })
+    // Depot bleibt bei 'sparrate' höher, da taxVP nicht abgezogen wird
+    expect(sparrate.depotwert).toBeGreaterThan(depot.depotwert)
+    // trueNetValue wirtschaftlich ähnlich wie netValue von 'depot' (< 5 % Abweichung)
+    const diff = Math.abs(sparrate.trueNetValue - depot.netValue)
+    expect(diff / depot.netValue).toBeLessThan(0.05)
+  })
+
+  it('effectiveTotalOutflows = contributions + VP-Steuer in beiden aktiven Modi', () => {
+    const d = calculateDepotRealistic({ ...DEFAULTS, vorabpauschaleMode: 'depot' })
+    const s = calculateDepotRealistic({ ...DEFAULTS, vorabpauschaleMode: 'sparrate' })
+    // Beide Modi: Gesamtbelastung = Einzahlungen + VP-Steuer
+    expect(d.effectiveTotalOutflows).toBeCloseTo(d.totalContributions + d.cumulativeVorabpauschalensteuer, 0)
+    expect(s.effectiveTotalOutflows).toBeCloseTo(s.totalContributions + s.cumulativeVorabpauschalensteuer, 0)
+  })
+
   it('cumulativeVP reduces the final taxable gain vs simplified', () => {
     const realistic = calculateDepotRealistic(DEFAULTS)
     expect(realistic.cumulativeVP).toBeGreaterThan(0)

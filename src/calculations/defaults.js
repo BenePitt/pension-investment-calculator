@@ -24,7 +24,8 @@ export const DEFAULTS = {
   kirchensteuer: 0.0,
   teilfreistellung: 0.30,
   basiszins: 0.032,
-  vorabpauschalenAktiviert: true,
+  // 'deaktiviert' | 'depot' (VP aus Depotwert) | 'sparrate' (VP aus Einkommen)
+  vorabpauschaleMode: 'depot',
 
   // Steuern Rentenpolice
   grenzsteuersatz: 0.45,
