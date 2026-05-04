@@ -3,6 +3,7 @@ import ParamField from './ParamField.jsx'
 import { DEFAULTS } from '../../calculations/defaults.js'
 
 const HELP = {
+  depotAktienanteil: 'Anteil des Depots in Direktaktien (z. B. Einzeltitel). Direktaktien haben 0 % Teilfreistellung und erzeugen keine Vorabpauschale. Der ETF/Fonds-Anteil erhält 30 % Teilfreistellung und ist vorabpauschalenpflichtig. Default: 0 % (reines ETF-Depot).',
   alterAktuell: 'Dein aktuelles Lebensalter in Jahren. Bestimmt die Ansparphase (= Renteneintrittsalter minus aktuelles Alter). Default: 28 Jahre.',
   renteneintrittsalter: 'Das geplante Renteneintrittsalter. Muss größer als das aktuelle Alter sein. Default: 67 Jahre.',
   zielalterEntnahme: 'Das Alter, bis zu dem der Depot-Entnahmeplan rechnerisch reichen soll. Default: 90 Jahre. Achtung: keine lebenslange Garantie.',
@@ -63,6 +64,45 @@ export default function ParameterPanel({ params, onChange, onReset }) {
         {field('sparratendynamik', { label: 'Sparratendynamik', unit: '% p. a.', min: 0, max: 10, step: 0.1,
           value: params.sparratendynamik * 100,
           onChange: (v) => onChange('sparratendynamik', v / 100) })}
+      </Accordion>
+
+      <Accordion title="Depot-Zusammensetzung" defaultOpen={false}>
+        {field('depotAktienanteil', {
+          label: 'Aktienanteil (Direktaktien)',
+          type: 'range',
+          min: 0,
+          max: 100,
+          step: 5,
+          value: params.depotAktienanteil * 100,
+          onChange: (v) => onChange('depotAktienanteil', v / 100),
+          helpText: 'Anteil des Depots in Direktaktien (z. B. Einzeltitel). Direktaktien haben 0 % Teilfreistellung und erzeugen keine Vorabpauschale. Der Rest wird als ETF/Aktienfonds mit 30 % Teilfreistellung behandelt.',
+        })}
+        <div className="depot-split-bar">
+          <div
+            className="depot-split-bar-etf"
+            style={{ flex: 1 - params.depotAktienanteil }}
+          >
+            <span>ETF / Fonds</span>
+            <strong>{((1 - params.depotAktienanteil) * 100).toFixed(0)} %</strong>
+          </div>
+          <div
+            className="depot-split-bar-aktien"
+            style={{ flex: params.depotAktienanteil }}
+          >
+            {params.depotAktienanteil > 0.08 && (
+              <>
+                <span>Direktaktien</span>
+                <strong>{(params.depotAktienanteil * 100).toFixed(0)} %</strong>
+              </>
+            )}
+          </div>
+        </div>
+        <p className="depot-split-note">
+          Eff. Teilfreistellung: <strong>{((1 - params.depotAktienanteil) * 30).toFixed(1)} %</strong>
+          {params.depotAktienanteil > 0 && params.vorabpauschaleMode !== 'deaktiviert' && (
+            <> · VP nur auf ETF-Anteil</>
+          )}
+        </p>
       </Accordion>
 
       <Accordion title="Rendite & Kosten">

@@ -64,6 +64,25 @@ export default function ParamField({
           <span className="toggle-slider" aria-hidden="true" />
           <span className="toggle-text">{value ? 'Aktiv' : 'Inaktiv'}</span>
         </label>
+      ) : type === 'range' ? (
+        <div className="range-field">
+          <input
+            id={fieldId}
+            type="range"
+            value={value}
+            min={min ?? 0}
+            max={max ?? 100}
+            step={step}
+            onChange={handleChange}
+            disabled={disabled}
+            className="range-input"
+          />
+          <div className="range-display">
+            <span className="range-display-left">{min ?? 0} %</span>
+            <span className="range-display-value">{Number(value).toFixed(0)} %</span>
+            <span className="range-display-right">{max ?? 100} %</span>
+          </div>
+        </div>
       ) : type === 'radio' ? (
         <div
           className="radio-group"

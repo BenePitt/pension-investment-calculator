@@ -16,6 +16,11 @@ export const DEFAULTS = {
   policeVerwaltungskosten: 0.015,
   policeEroeffnungskosten: 4000,
 
+  // Depot-Zusammensetzung
+  // 0 = 100 % ETF/Fonds, 1 = 100 % Direktaktien
+  // Direktaktien: Teilfreistellung 0 %, keine Vorabpauschale
+  depotAktienanteil: 0.0,
+
   // Steuern Depot
   sparerPauschbetrag: 1000,
   pauschbetragVerfuegbar: 1.0,

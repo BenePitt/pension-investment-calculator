@@ -246,6 +246,39 @@ ul { list-style: none; }
 }
 .footer-legal-btn:hover { color: var(--color-gray-700); }
 
+/* ===== Range Slider ===== */
+.range-field { display: flex; flex-direction: column; gap: 0.25rem; }
+.range-input {
+  width: 100%; height: 6px; border-radius: 3px; cursor: pointer;
+  accent-color: var(--color-primary);
+}
+.range-display {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--color-gray-400);
+}
+.range-display-value { font-weight: 600; color: var(--color-primary); font-size: 0.82rem; }
+
+/* ===== Depot-Split-Anzeige ===== */
+.depot-split-bar {
+  display: flex; height: 28px; border-radius: 4px; overflow: hidden;
+  margin-top: 0.3rem; border: 1px solid var(--color-gray-200);
+}
+.depot-split-bar-etf, .depot-split-bar-aktien {
+  display: flex; align-items: center; justify-content: center; gap: 0.3rem;
+  font-size: 0.7rem; padding: 0 0.4rem; min-width: 0; transition: flex 0.2s;
+  overflow: hidden; white-space: nowrap;
+}
+.depot-split-bar-etf {
+  background: var(--color-primary); color: white;
+}
+.depot-split-bar-aktien {
+  background: var(--color-green); color: white;
+}
+.depot-split-note {
+  font-size: 0.75rem; color: var(--color-gray-400); margin-top: 0.2rem;
+}
+.depot-split-note strong { color: var(--color-gray-600); }
+
 /* ===== Radio Group (vorabpauschaleMode) ===== */
 .radio-group { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.2rem; }
 .radio-option {

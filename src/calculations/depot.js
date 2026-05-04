@@ -5,11 +5,20 @@ import {
   getMonatsrendite,
 } from './defaults.js'
 
+// Effektive Teilfreistellung für das Depot:
+// ETF-Anteil erhält die konfigurierte Teilfreistellung (Standard 30 % für Aktienfonds),
+// Direktaktien-Anteil hat 0 % Teilfreistellung und erzeugt keine Vorabpauschale.
+function getEffektiveTeilfreistellung(params) {
+  const etfAnteil = 1 - (params.depotAktienanteil ?? 0)
+  return etfAnteil * params.teilfreistellung
+}
+
 export function calculateDepotSimplified(params) {
   const monate = getAnsparMonate(params)
   const nettoRenditePA = params.bruttofondrendite - params.depotFondskosten - params.depotPlattformkosten
   const monatlich = getMonatsrendite(nettoRenditePA)
   const steuersatz = getSteuersatzKapital(params)
+  const effectiveTF = getEffektiveTeilfreistellung(params)
   const pauschbetrag = params.sparerPauschbetrag * params.pauschbetragVerfuegbar
 
   let depot = params.startkapital
@@ -30,7 +39,7 @@ export function calculateDepotSimplified(params) {
   }
 
   const gewinn = depot - totalContributions
-  const taxableGain = Math.max(0, gewinn * (1 - params.teilfreistellung) - pauschbetrag)
+  const taxableGain = Math.max(0, gewinn * (1 - effectiveTF) - pauschbetrag)
   const tax = taxableGain * steuersatz
   const netValue = depot - tax
 
@@ -43,6 +52,9 @@ export function calculateDepotRealistic(params) {
   const monatlich = getMonatsrendite(nettoRenditePA)
   const steuersatz = getSteuersatzKapital(params)
   const pauschbetragJahr = params.sparerPauschbetrag * params.pauschbetragVerfuegbar
+  const effectiveTF = getEffektiveTeilfreistellung(params)
+  // Nur der ETF-Anteil des Depots erzeugt eine Vorabpauschale
+  const etfAnteil = 1 - (params.depotAktienanteil ?? 0)
 
   let depot = params.startkapital
   let totalContributions = 0
@@ -54,9 +66,6 @@ export function calculateDepotRealistic(params) {
   let taxPaidThisYear = 0
   let pauschbetragRemainingThisYear = pauschbetragJahr
   let pauschbetragRemainingFinal = pauschbetragJahr
-
-  // 'sparrate': VP-Steuer des Vorjahres reduziert die laufenden Einzahlungen,
-  // sodass die Jahresbelastung (Einzahlung + VP) ≈ Jahres-Sparrate bleibt.
   let prevYearVPsteuer = 0
 
   const yearlyData = []
@@ -65,7 +74,6 @@ export function calculateDepotRealistic(params) {
     depot *= (1 + monatlich)
     const rate = getSparrate(params, m)
 
-    // Im 'sparrate'-Modus: Einzahlung um VP-Steuer des Vorjahres verringern
     const effectiveRate = params.vorabpauschaleMode === 'sparrate'
       ? Math.max(0, rate - prevYearVPsteuer / 12)
       : rate
@@ -84,23 +92,22 @@ export function calculateDepotRealistic(params) {
 
       const vpAktiv = params.vorabpauschaleMode !== 'deaktiviert'
       if (vpAktiv && isYearEnd) {
-        const basisertrag = depotwertJan1 * params.basiszins * 0.70
+        // Basisertrag nur auf den ETF-Anteil des Depots (Aktien erzeugen keine VP)
+        const basisertrag = depotwertJan1 * etfAnteil * params.basiszins * 0.70
         const yearlyGain = Math.max(0, depot - depotwertJan1 + taxPaidThisYear)
         vorabpauschale = Math.max(0, Math.min(basisertrag, yearlyGain))
 
-        let taxableVP = vorabpauschale * (1 - params.teilfreistellung)
+        let taxableVP = vorabpauschale * (1 - effectiveTF)
         taxableVP = Math.max(0, taxableVP - pauschbetragRemainingThisYear)
 
         taxVP = taxableVP * steuersatz
-        // 'depot': VP-Steuer wird jährlich aus dem Fondsvermögen entnommen (zusätzl. Belastung)
-        // 'sparrate': Depot unberührt — VP bereits durch reduzierte Einzahlungen finanziert
         if (params.vorabpauschaleMode === 'depot') {
           depot -= taxVP
         }
         cumulativeVP += vorabpauschale
         cumulativeVPsteuer += taxVP
 
-        pauschbetragRemainingFinal = Math.max(0, pauschbetragRemainingThisYear - vorabpauschale * (1 - params.teilfreistellung))
+        pauschbetragRemainingFinal = Math.max(0, pauschbetragRemainingThisYear - vorabpauschale * (1 - effectiveTF))
         pauschbetragRemainingThisYear = pauschbetragJahr
         taxPaidThisYear = isLastMonth ? taxVP : 0
       }
@@ -116,8 +123,6 @@ export function calculateDepotRealistic(params) {
       })
 
       if (isYearEnd && !isLastMonth) {
-        // Im 'sparrate'-Modus: VP-Steuer dieses Jahres wird im nächsten Jahr
-        // von den monatlichen Einzahlungen abgezogen
         if (params.vorabpauschaleMode === 'sparrate') {
           prevYearVPsteuer = taxVP
         }
@@ -128,23 +133,17 @@ export function calculateDepotRealistic(params) {
     }
   }
 
-  // Final sale: only tax gain not yet covered by Vorabpauschalen
   const gain = depot - totalContributions
   const adjustedGain = Math.max(0, gain - cumulativeVP)
-  const taxableGain = Math.max(0, adjustedGain * (1 - params.teilfreistellung) - pauschbetragRemainingFinal)
+  const taxableGain = Math.max(0, adjustedGain * (1 - effectiveTF) - pauschbetragRemainingFinal)
   const tax = taxableGain * steuersatz
   const netValue = depot - tax
   const adjustedCostBasis = totalContributions + cumulativeVP
 
-  // 'depot':     VP-Steuer ist zusätzliche Belastung über die Sparrate hinaus
-  // 'sparrate':  Einzahlungen wurden um VP reduziert → VP bereits in der Sparrate enthalten
-  // In beiden Fällen: effectiveTotalOutflows = was der Anleger insgesamt aufgewendet hat
   const effectiveTotalOutflows = params.vorabpauschaleMode !== 'deaktiviert'
     ? totalContributions + cumulativeVPsteuer
     : totalContributions
 
-  // trueNetValue: für alle Modi gleich netValue
-  // ('sparrate': VP bereits in Beitragsreduktion verrechnet, kein externer Abzug nötig)
   const trueNetValue = netValue
 
   return {
